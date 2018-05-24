@@ -6,6 +6,10 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/relativelimited/mongo-repo-ts.git"
+  },
   "author": "Nick Cousins <nick.cousins@relativelimited.com>",
   "license": "MIT",
   "dependencies": {
