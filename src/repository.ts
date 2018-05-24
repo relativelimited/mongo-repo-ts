@@ -21,7 +21,7 @@ export interface RepositoryDocument {
     created: string;
 }
 
-export default class Repository<T extends RepositoryDocument> implements RepositoryInterface<RepositoryDocument> {
+export class Repository<T extends RepositoryDocument> implements RepositoryInterface<RepositoryDocument> {
     collectionName: string;
     modelRef: string;
     increments: boolean = true;

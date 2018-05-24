@@ -91,4 +91,4 @@ class Repository {
         });
     }
 }
-exports.default = Repository;
+exports.Repository = Repository;
