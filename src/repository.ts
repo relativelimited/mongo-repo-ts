@@ -1,10 +1,25 @@
 import {Db, FilterQuery, MongoClient} from "mongodb";
 import DocumentIncrementer from "./document-incrementer";
-import {RepositoryDocument, RepositoryInterface} from "./repositoryInterface";
-
 const dbConnectionString = process.env['MONGO_DB_CONNECTION_URI'] || '';
 const dbDatabase = process.env['MONGO_DB_DATABASE'] || '';
 let dbC: Db;
+
+export interface RepositoryInterface<T extends RepositoryDocument> {
+    getByID(id: string): Promise<T>;
+
+    getAll(): Promise<Array<T>>;
+
+    save(model: T): Promise<T>;
+
+    create(model: T): Promise<T>;
+
+    delete(id: string): Promise<boolean>;
+}
+
+export interface RepositoryDocument {
+    _id: string;
+    created: string;
+}
 
 export default class Repository<T extends RepositoryDocument> implements RepositoryInterface<RepositoryDocument> {
     collectionName: string;

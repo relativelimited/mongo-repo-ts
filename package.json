@@ -2,7 +2,7 @@
   "name": "mongo-repo-ts",
   "version": "1.0.2",
   "description": "Repository Pattern Implementation in TypeScript for MongoDB",
-  "main": "index.ts",
+  "main": "src/repository.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
