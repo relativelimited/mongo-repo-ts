@@ -15,5 +15,8 @@
   "dependencies": {
     "@types/mongodb": "^3.0.18",
     "mongodb": "^3.1.0-beta4"
+  },
+  "devDependencies": {
+    "typescript": "^2.8.3"
   }
 }
