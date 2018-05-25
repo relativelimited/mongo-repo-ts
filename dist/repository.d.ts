@@ -1,7 +1,7 @@
 import { FilterQuery } from "mongodb";
 export interface RepositoryInterface<T extends RepositoryDocument> {
     getByID(id: string): Promise<T>;
-    getAll(): Promise<Array<T>>;
+    getAll(query?: FilterQuery<any>): Promise<Array<T>>;
     save(model: T): Promise<T>;
     create(model: T): Promise<T>;
     delete(id: string): Promise<boolean>;
