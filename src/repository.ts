@@ -7,7 +7,7 @@ let dbC: Db;
 export interface RepositoryInterface<T extends RepositoryDocument> {
     getByID(id: string): Promise<T>;
 
-    getAll(): Promise<Array<T>>;
+    getAll(query?: FilterQuery<any>): Promise<Array<T>>;
 
     save(model: T): Promise<T>;
 
