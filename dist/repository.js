@@ -13,39 +13,40 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongodb_1 = require("mongodb");
 const document_incrementer_1 = __importDefault(require("./document-incrementer"));
-const dbConnectionString = process.env['MONGO_DB_CONNECTION_URI'] || '';
-const dbDatabase = process.env['MONGO_DB_DATABASE'] || '';
-let dbC;
 class Repository {
-    constructor(collectionName, modelRef) {
+    constructor(options, mongoClient) {
         this.increments = true;
-        this.collectionName = collectionName;
-        this.modelRef = modelRef;
+        this.collectionName = options.collectionName;
+        this.modelRef = options.modelRef;
+        this.increments = options.increments;
+        this.connectionUri = options.mongoDBConnectionURI;
+        this.dbName = options.mongoDBDatabase;
+        this.mongoClient = mongoClient;
     }
     getByID(id) {
         return __awaiter(this, void 0, void 0, function* () {
-            const db = yield Repository.getDb();
+            const db = yield this.getDb();
             return db.collection(this.collectionName).findOne({ _id: id });
         });
     }
-    static getDb() {
+    getDb() {
         return __awaiter(this, void 0, void 0, function* () {
-            if (!dbC) {
-                const client = yield mongodb_1.MongoClient.connect(dbConnectionString);
-                dbC = client.db(dbDatabase);
+            if (!this.mongoClient) {
+                this.mongoClient = yield mongodb_1.MongoClient.connect(this.connectionUri);
             }
-            return dbC;
+            return this.mongoClient.db(this.dbName);
+            ;
         });
     }
     getAll(query) {
         return __awaiter(this, void 0, void 0, function* () {
-            const db = yield Repository.getDb();
+            const db = yield this.getDb();
             return db.collection(this.collectionName).find(query || {}).toArray();
         });
     }
     save(model) {
         return __awaiter(this, void 0, void 0, function* () {
-            const db = yield Repository.getDb();
+            const db = yield this.getDb();
             if (!model._id || model._id.length === 0) {
                 throw new Error('Model ID not set');
             }
@@ -60,7 +61,7 @@ class Repository {
     }
     create(model) {
         return __awaiter(this, void 0, void 0, function* () {
-            const db = yield Repository.getDb();
+            const db = yield this.getDb();
             if ((!model._id || model._id.length === 0) && this.increments) {
                 model._id = yield this.getID();
             }
@@ -74,13 +75,13 @@ class Repository {
     }
     getID() {
         return __awaiter(this, void 0, void 0, function* () {
-            const di = new document_incrementer_1.default(dbC);
+            const di = new document_incrementer_1.default(yield this.getDb());
             return di.for(this.modelRef);
         });
     }
     delete(id) {
         return __awaiter(this, void 0, void 0, function* () {
-            const db = yield Repository.getDb();
+            const db = yield this.getDb();
             const response = yield db.collection(this.collectionName).deleteOne({ _id: id });
             if (!response || response.result.n === 0) {
                 throw new Error('Request not found');

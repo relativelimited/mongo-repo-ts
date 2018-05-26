@@ -1,8 +1,5 @@
 import {Db, FilterQuery, MongoClient} from "mongodb";
 import DocumentIncrementer from "./document-incrementer";
-const dbConnectionString = process.env['MONGO_DB_CONNECTION_URI'] || '';
-const dbDatabase = process.env['MONGO_DB_DATABASE'] || '';
-let dbC: Db;
 
 export interface RepositoryInterface<T extends RepositoryDocument> {
     getByID(id: string): Promise<T>;
@@ -21,36 +18,51 @@ export interface RepositoryDocument {
     created: string;
 }
 
+export interface RepositoryOptions {
+    collectionName: string;
+    modelRef: string;
+    mongoDBConnectionURI: string;
+    mongoDBDatabase: string;
+    increments: boolean;
+}
+
 export class Repository<T extends RepositoryDocument> implements RepositoryInterface<RepositoryDocument> {
     collectionName: string;
     modelRef: string;
     increments: boolean = true;
+    connectionUri: string;
+    dbName: string;
+    mongoClient?: MongoClient;
 
-    constructor(collectionName: string, modelRef: string) {
-        this.collectionName = collectionName;
-        this.modelRef = modelRef;
+    constructor(options: RepositoryOptions, mongoClient?: MongoClient) {
+        this.collectionName = options.collectionName;
+        this.modelRef = options.modelRef;
+        this.increments = options.increments;
+        this.connectionUri = options.mongoDBConnectionURI;
+        this.dbName = options.mongoDBDatabase;
+        this.mongoClient = mongoClient;
     }
 
     async getByID(id: string): Promise<T> {
-        const db = await Repository.getDb();
+        const db = await this.getDb();
         return db.collection(this.collectionName).findOne({_id: id});
     }
 
-    private static async getDb(): Promise<Db> {
-        if (!dbC) {
-            const client = await MongoClient.connect(dbConnectionString);
-            dbC = client.db(dbDatabase);
+    private async getDb(): Promise<Db> {
+        if (!this.mongoClient) {
+            this.mongoClient = await MongoClient.connect(this.connectionUri);
         }
-        return dbC;
+        return this.mongoClient.db(this.dbName);
+        ;
     }
 
     async getAll(query?: FilterQuery<any>): Promise<Array<T>> {
-        const db = await Repository.getDb();
+        const db = await this.getDb();
         return db.collection(this.collectionName).find(query || {}).toArray();
     }
 
     async save(model: T): Promise<T> {
-        const db = await Repository.getDb();
+        const db = await this.getDb();
         if (!model._id || model._id.length === 0) {
             throw new Error('Model ID not set');
         }
@@ -67,7 +79,7 @@ export class Repository<T extends RepositoryDocument> implements RepositoryInter
     }
 
     async create(model: T): Promise<T> {
-        const db = await Repository.getDb();
+        const db = await this.getDb();
         if ((!model._id || model._id.length === 0) && this.increments) {
             model._id = await this.getID();
         }
@@ -82,12 +94,12 @@ export class Repository<T extends RepositoryDocument> implements RepositoryInter
     }
 
     private async getID(): Promise<string> {
-        const di = new DocumentIncrementer(dbC);
+        const di = new DocumentIncrementer(await this.getDb());
         return di.for(this.modelRef);
     }
 
     async delete(id: string): Promise<boolean> {
-        const db = await Repository.getDb();
+        const db = await this.getDb();
         const response = await db.collection(this.collectionName).deleteOne({_id: id});
 
         if (!response || response.result.n === 0) {

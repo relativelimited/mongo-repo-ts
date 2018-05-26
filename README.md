@@ -7,12 +7,6 @@ npm install mongo-repo-ts --save
 
 ## Getting Started
 #### Configuration
-First, you need to set the following environment variables:
-`MONGO_DB_CONNECTION_URI` and `MONGO_DB_DATABASE` e.g.:
-```
-export MONGO_DB_CONNECTION_URI=mongodb://localhost/my_db
-export MONGO_DB_DATABASE=my_db
-```
 If you're going to use the built-in sequential IDs, you'll need to create a collection in your MongoDB database called 
 `ids`.
 
@@ -39,23 +33,28 @@ class BlogPostRepository extends Repository<BlogPostDocument>
 {
     constructor()
     {
-        super('blogposts', 'com.example.blog.post');
+        super({
+            collectionName: 'blogposts',
+            modelRef: 'com.example.blog.post',
+            mongoDBConnectionURI: 'mongodb://localhost:27017/my_db',
+            mongoDBDatabase: 'my_db',
+            increments: true,
+        });
     }
 }
 ```
-Note the two parameters passed to the parent constructor are:
+Note the parameters passed in the options to the parent constructor are:
 - Collection Name - the name of the MongoDB collection where your documents are stored
 - Model Reference - a unique namespace for this type of document
+- Mongo DB connection string
+- Mongo DB database name
+- Whether or not to use sequential model IDs instead of Mongo's built-in ObjectID
+
+I highly recommend you set your connection URI using environment variables to ensure your password is not stored in 
+code.
 
 The repository will automatically generate sequential IDs for you when you create documents without an ID. If you'd 
-rather use MongoDB's built-in ObjectIDs then have your constructor:
-```typescript
-constructor()
-{
-    super('blogposts', 'com.example.blog.post');
-    this.increments = false;
-}
-```
+rather use MongoDB's built-in ObjectIDs then set this to false;
 
 ## Using your Repository
 In your code:
@@ -80,7 +79,7 @@ repo.getByID('123').then( document => {
 });
 ```
 
-## Update a Document by ID
+## Update a Document
 ```typescript
 repo.save(document).then( document => {
     // The document that was saved is returned
@@ -88,7 +87,7 @@ repo.save(document).then( document => {
     // handle error
 });
 ```
-## Delete a Document by ID
+## Delete a Document
 ```typescript
 repo.delete('123').then( result => {
     // Result is true if found & deleted
